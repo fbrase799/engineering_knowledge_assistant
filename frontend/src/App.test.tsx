@@ -9,5 +9,14 @@ describe("App", () => {
     expect(html).toContain('aria-checked="true"');
     expect(html).toContain("Hybrid");
     expect(html).toContain("Engineering Knowledge Assistant");
+    expect(html).toContain("Technology Stack");
+    expect(html).toContain("LangChain");
+    expect(html).toContain("LangGraph");
+    expect(html).toContain("RAG");
+    expect(html).toContain("Examples below match the selected mode (documents + web).");
+    expect(html).toContain("Hybrid (default)");
+    expect(html).toContain("Local");
+    expect(html).toContain("Web");
+    expect(html).toContain("View knowledge");
   });
 });

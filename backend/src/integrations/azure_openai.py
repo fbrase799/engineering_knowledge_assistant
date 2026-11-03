@@ -47,6 +47,8 @@ class LLMClientProtocol(Protocol):
 
 
 class AzureOpenAIClient:
+    """Generation client for OpenAI platform or Azure OpenAI (≤1 call per question)."""
+
     def __init__(self, settings: Settings, client: Any | None = None):
         self._settings = settings
         self._client = client
@@ -56,19 +58,33 @@ class AzureOpenAIClient:
     def _ensure_client(self) -> Any:
         if self._client is not None:
             return self._client
-        if not self._settings.azure_configured:
-            raise RuntimeError("Azure OpenAI is not configured")
-        from langchain_openai import AzureChatOpenAI
+        provider = self._settings.resolved_llm_provider
+        if provider == "openai":
+            from langchain_openai import ChatOpenAI
 
-        self._client = AzureChatOpenAI(
-            azure_endpoint=self._settings.azure_openai_endpoint,
-            api_key=self._settings.azure_openai_api_key,
-            api_version=self._settings.azure_openai_api_version,
-            azure_deployment=self._settings.azure_openai_deployment,
-            temperature=self._settings.azure_openai_temperature,
-            max_tokens=self._settings.azure_openai_max_tokens,
+            self._client = ChatOpenAI(
+                api_key=self._settings.openai_api_key,
+                model=self._settings.openai_model,
+                temperature=self._settings.llm_temperature,
+                max_tokens=self._settings.llm_max_tokens,
+            )
+            return self._client
+        if provider == "azure":
+            from langchain_openai import AzureChatOpenAI
+
+            self._client = AzureChatOpenAI(
+                azure_endpoint=self._settings.azure_openai_endpoint,
+                api_key=self._settings.azure_openai_api_key,
+                api_version=self._settings.azure_openai_api_version,
+                azure_deployment=self._settings.azure_openai_deployment,
+                temperature=self._settings.llm_temperature,
+                max_tokens=self._settings.llm_max_tokens,
+            )
+            return self._client
+        raise RuntimeError(
+            "No LLM configured. Set OPENAI_API_KEY (platform.openai.com) "
+            "or AZURE_OPENAI_API_KEY + AZURE_OPENAI_ENDPOINT."
         )
-        return self._client
 
     def generate(
         self,

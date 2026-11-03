@@ -16,6 +16,9 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     faiss_ready: bool
+    llm_configured: bool
+    llm_provider: str | None
+    openai_configured: bool
     azure_configured: bool
     tavily_configured: bool
     langsmith_tracing: bool

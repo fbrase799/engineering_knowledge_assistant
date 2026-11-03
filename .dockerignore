@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+frontend/node_modules
+frontend/dist
+.cache
+**/.fastembed_cache
+backend/data/faiss
+.env
+*.egg-info
+.DS_Store

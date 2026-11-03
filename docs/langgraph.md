@@ -1,7 +1,13 @@
 # LangGraph Workflow
 
 This diagram is **generated from the compiled LangGraph graph**.
-Do not edit the Mermaid block by hand — run `uv run python scripts/export_graph.py`.
+Do not edit the Mermaid block by hand — regenerate via containerized `uv`:
+
+```bash
+docker compose -f docker/compose.yaml --profile test run --rm \
+  -v "$PWD/docs:/app/docs" backend-test \
+  uv run python scripts/export_graph.py
+```
 
 ## Retrieval and synthesis flow
 

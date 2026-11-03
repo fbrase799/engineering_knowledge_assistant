@@ -17,7 +17,7 @@ flowchart TD
 
 ## Ingestion
 
-- Offline only (`uv run python scripts/ingest.py`)
+- Offline only, during the backend image build (`scripts/ingest.py` via container `uv`)
 - Parses YAML frontmatter (`doc_id`, title, version, section)
 - Chunk size 800 / overlap 120 (configurable)
 - Index packaged into the backend container image

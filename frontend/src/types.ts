@@ -6,6 +6,34 @@ export interface ExampleQuestion {
   retrieval_mode: RetrievalMode;
 }
 
+export interface CorpusDocument {
+  doc_id: string;
+  title: string;
+  version: string;
+  section: string;
+  filename: string;
+  summary: string;
+  content_markdown: string;
+  provenance: string;
+}
+
+export interface CorpusCatalog {
+  scenario: {
+    title: string;
+    summary: string;
+    what_we_protect: string;
+    what_we_analyze: string;
+  };
+  documents: CorpusDocument[];
+  index: {
+    embedding_model: string | null;
+    chunk_count: number | null;
+    document_count: number | null;
+    created_at: string | null;
+    doc_ids: string[];
+  };
+}
+
 export interface Citation {
   source_id: string;
   source_type: "document" | "web";

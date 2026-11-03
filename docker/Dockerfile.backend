@@ -1,9 +1,11 @@
+# syntax=docker/dockerfile:1.7
 FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv \
     HF_HOME=/app/.cache/huggingface \
     FASTEMBED_CACHE_PATH=/app/.cache/fastembed
 
@@ -13,7 +15,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv
 
-COPY pyproject.toml README.md ./
+# 1) Dependency metadata only — changes rarely; keeps package downloads cached.
+COPY pyproject.toml README.md uv.lock ./
+
+# Install third-party deps without the local package so backend code edits
+# do not invalidate this expensive layer.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-install-project
+
+# 2) Warm FastEmbed/HF model weights once (the usual multi-minute download).
+COPY scripts/warmup_embeddings.py ./scripts/warmup_embeddings.py
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv run --no-sync python scripts/warmup_embeddings.py
+
+# 3) Application sources — invalidate only when these change.
 COPY backend ./backend
 COPY scripts ./scripts
 COPY sample_documents ./sample_documents
@@ -21,15 +36,17 @@ COPY evaluations ./evaluations
 COPY docs ./docs
 
 FROM base AS runtime
-RUN uv sync --no-dev \
-    && uv run python scripts/ingest.py \
-    && uv run python scripts/export_graph.py
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev \
+    && uv run --no-sync python scripts/ingest.py \
+    && uv run --no-sync python scripts/export_graph.py
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "backend.src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "backend.src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
 
+# Dev/test image keeps the committed docs/langgraph.md so export --check can detect drift.
 FROM base AS dev
-RUN uv sync --extra dev \
-    && uv run python scripts/ingest.py \
-    && uv run python scripts/export_graph.py
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --extra dev \
+    && uv run --no-sync python scripts/ingest.py
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "backend.src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "backend.src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

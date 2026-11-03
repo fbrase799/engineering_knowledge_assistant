@@ -38,13 +38,21 @@ class Settings(BaseSettings):
     tavily_max_results: int = 3
     tavily_search_depth: str = "basic"
 
-    # Azure OpenAI
+    # LLM provider: auto | openai | azure
+    # auto = OpenAI platform if OPENAI_API_KEY is set, else Azure OpenAI.
+    llm_provider: str = "auto"
+
+    # OpenAI platform (platform.openai.com credits / API keys)
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
+
+    # Azure OpenAI (AKS / Azure deployments)
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
     azure_openai_api_version: str = "2024-10-21"
     azure_openai_deployment: str = "gpt-4o-mini"
-    azure_openai_max_tokens: int = 1800
-    azure_openai_temperature: float = 0.2
+    llm_max_tokens: int = 1800
+    llm_temperature: float = 0.2
     estimated_input_cost_per_1k: float = 0.00015
     estimated_output_cost_per_1k: float = 0.0006
 
@@ -60,8 +68,30 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://localhost:3000"])
 
     @property
+    def openai_configured(self) -> bool:
+        return bool(self.openai_api_key)
+
+    @property
     def azure_configured(self) -> bool:
         return bool(self.azure_openai_api_key and self.azure_openai_endpoint)
+
+    @property
+    def llm_configured(self) -> bool:
+        return self.resolved_llm_provider is not None
+
+    @property
+    def resolved_llm_provider(self) -> str | None:
+        provider = (self.llm_provider or "auto").lower().strip()
+        if provider == "openai":
+            return "openai" if self.openai_configured else None
+        if provider == "azure":
+            return "azure" if self.azure_configured else None
+        # auto
+        if self.openai_configured:
+            return "openai"
+        if self.azure_configured:
+            return "azure"
+        return None
 
     @property
     def tavily_configured(self) -> bool:

@@ -1,4 +1,10 @@
-import type { AskResponse, ExampleQuestion, ExecutionEvent, RetrievalMode } from "./types";
+import type {
+  AskResponse,
+  CorpusCatalog,
+  ExampleQuestion,
+  ExecutionEvent,
+  RetrievalMode,
+} from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
@@ -7,6 +13,19 @@ export async function fetchExamples(): Promise<ExampleQuestion[]> {
   if (!res.ok) throw new Error("Failed to load examples");
   const data = await res.json();
   return data.examples;
+}
+
+export async function fetchCorpus(): Promise<CorpusCatalog> {
+  const res = await fetch(`${API_BASE}/api/corpus`);
+  if (!res.ok) throw new Error("Failed to load corpus catalog");
+  return res.json();
+}
+
+export async function fetchGraphMermaid(): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/graph`);
+  if (!res.ok) throw new Error("Failed to load LangGraph diagram");
+  const data = await res.json();
+  return data.mermaid as string;
 }
 
 export async function askQuestion(

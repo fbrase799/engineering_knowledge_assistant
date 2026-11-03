@@ -22,7 +22,7 @@ from backend.src.api.schemas import (
     HealthResponse,
 )
 from backend.src.config import Settings, get_settings
-from backend.src.graph.workflow import AssistantGraph, build_assistant_graph
+from backend.src.graph.workflow import AssistantGraph, build_assistant_graph, get_graph_mermaid
 from backend.src.observability.tracing import configure_langsmith
 from backend.src.retrieval.models import (
     AskResponse,
@@ -30,10 +30,11 @@ from backend.src.retrieval.models import (
     RetrievalMode,
     UsageMetrics,
 )
+from backend.src.retrieval.corpus_catalog import build_corpus_catalog
 from backend.src.retrieval.retriever import get_shared_retriever, reset_shared_retriever
-from backend.src.retrieval.store import load_corpus_metadata
 
 EXAMPLE_QUESTIONS = [
+    # Hybrid — compare / combine curated knowledge with public web findings
     ExampleQuestion(
         label="Compare timeouts",
         question=(
@@ -51,18 +52,21 @@ EXAMPLE_QUESTIONS = [
         retrieval_mode=RetrievalMode.HYBRID,
     ),
     ExampleQuestion(
-        label="Understand local thresholds",
+        label="Compare alerting",
         question=(
-            "What timeout thresholds and fallback states are specified in the sample architecture?"
+            "How does our Offline paging and flapping suppression policy compare with "
+            "common practices in current public SRE / observability guidance?"
         ),
-        retrieval_mode=RetrievalMode.LOCAL,
+        retrieval_mode=RetrievalMode.HYBRID,
     ),
     ExampleQuestion(
-        label="Research public watchdogs",
+        label="Recovery vs public guidance",
         question=(
-            "What do current official sources say about watchdog strategies on embedded Linux?"
+            "Our runbook returns Offline devices through a Degraded anti-flap window. "
+            "What do current public sources recommend for recovery after watchdog or "
+            "heartbeat failures?"
         ),
-        retrieval_mode=RetrievalMode.WEB,
+        retrieval_mode=RetrievalMode.HYBRID,
     ),
     ExampleQuestion(
         label="Evidence gap",
@@ -70,6 +74,85 @@ EXAMPLE_QUESTIONS = [
             "How does our architecture comply with ISO 26262 ASIL-D for braking systems?"
         ),
         retrieval_mode=RetrievalMode.HYBRID,
+    ),
+    # Local — curated engineering knowledge only
+    ExampleQuestion(
+        label="Timeout thresholds",
+        question=(
+            "What timeout thresholds and fallback states are specified in the sample architecture?"
+        ),
+        retrieval_mode=RetrievalMode.LOCAL,
+    ),
+    ExampleQuestion(
+        label="Heartbeat decision",
+        question=(
+            "Why did we choose a dedicated heartbeat monitor instead of measurement-only "
+            "liveness, and what was rejected?"
+        ),
+        retrieval_mode=RetrievalMode.LOCAL,
+    ),
+    ExampleQuestion(
+        label="Alert escalation",
+        question=(
+            "What severity, channels, and escalation timings apply when a device goes Offline?"
+        ),
+        retrieval_mode=RetrievalMode.LOCAL,
+    ),
+    ExampleQuestion(
+        label="Offline recovery steps",
+        question=(
+            "According to the gateway runbook, what steps restore a device after Offline, "
+            "and how does the anti-flap rule work?"
+        ),
+        retrieval_mode=RetrievalMode.LOCAL,
+    ),
+    ExampleQuestion(
+        label="Test acceptance",
+        question=(
+            "Which fault-injection and regression scenarios does the test strategy require "
+            "for heartbeat gaps?"
+        ),
+        retrieval_mode=RetrievalMode.LOCAL,
+    ),
+    # Web — public sources only
+    ExampleQuestion(
+        label="Embedded Linux watchdogs",
+        question=(
+            "What do current official sources say about watchdog strategies on embedded Linux?"
+        ),
+        retrieval_mode=RetrievalMode.WEB,
+    ),
+    ExampleQuestion(
+        label="Hardware vs software watchdog",
+        question=(
+            "What do recent public technical docs recommend when choosing between hardware "
+            "and software watchdogs on edge devices?"
+        ),
+        retrieval_mode=RetrievalMode.WEB,
+    ),
+    ExampleQuestion(
+        label="Heartbeat best practices",
+        question=(
+            "What current public guidance exists for heartbeat intervals and missed-heartbeat "
+            "detection in distributed edge systems?"
+        ),
+        retrieval_mode=RetrievalMode.WEB,
+    ),
+    ExampleQuestion(
+        label="Flapping and alert noise",
+        question=(
+            "What do current SRE or monitoring sources recommend for suppressing flapping "
+            "alerts without hiding real outages?"
+        ),
+        retrieval_mode=RetrievalMode.WEB,
+    ),
+    ExampleQuestion(
+        label="systemd watchdog",
+        question=(
+            "What do current official systemd or Linux documentation sources say about "
+            "service watchdog and KeepAlive features?"
+        ),
+        retrieval_mode=RetrievalMode.WEB,
     ),
 ]
 
@@ -158,6 +241,9 @@ def create_app(
             status="ok",
             version=settings.app_version,
             faiss_ready=faiss_ready,
+            llm_configured=settings.llm_configured,
+            llm_provider=settings.resolved_llm_provider,
+            openai_configured=settings.openai_configured,
             azure_configured=settings.azure_configured,
             tavily_configured=settings.tavily_configured,
             langsmith_tracing=settings.langsmith_tracing and bool(settings.langsmith_api_key),
@@ -169,7 +255,15 @@ def create_app(
 
     @app.get("/api/corpus")
     def corpus() -> dict[str, Any]:
-        return load_corpus_metadata(settings.faiss_index_dir)
+        return build_corpus_catalog(settings.sample_docs_dir, settings.faiss_index_dir)
+
+    @app.get("/api/graph")
+    def graph_diagram() -> dict[str, str]:
+        assistant: AssistantGraph = state["graph"]
+        return {
+            "format": "mermaid",
+            "mermaid": get_graph_mermaid(assistant),
+        }
 
     @app.post("/api/ask", response_model=AskResponse)
     def ask(payload: AskRequest, request: Request) -> AskResponse:
@@ -214,3 +308,4 @@ def create_app(
 
 
 app = create_app()
+

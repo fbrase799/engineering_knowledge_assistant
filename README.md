@@ -13,26 +13,39 @@ Treat [PRD.md](PRD.md) as the product source of truth.
 
 **Docker-first:** run the app and tests with Compose. `uv` and Node tooling execute inside containers — not on the host.
 
+Backend image builds cache dependency install and the FastEmbed model download in separate layers, so routine code changes should rebuild in seconds rather than re-downloading packages/models. First build (or a `pyproject.toml` / lockfile change) is still slow.
+
 ## Run locally
 
 ```bash
 cp .env.example .env
-# fill AZURE_OPENAI_* and TAVILY_API_KEY
+# For local demo with OpenAI platform credits:
+#   OPENAI_API_KEY=sk-...
+#   TAVILY_API_KEY=...
+# Azure OpenAI (AZURE_OPENAI_*) is optional and typical for AKS later.
 
 docker compose -f docker/compose.yaml up --build
 ```
 
 - UI: http://localhost:5173
-- API: http://localhost:8000/health
+- API: [http://localho***st:8000/health](http://localhost:8000/health)***
 
-## Tests
+## ***Tests***
 
-All checks use containerized `uv` / `npm`:
+***All checks use containerized*** `uv` ***/*** `npm` ***(no host Python/Node required):***
 
 ```bash
 docker compose -f docker/compose.yaml --profile test build backend-test frontend-test
 docker compose -f docker/compose.yaml --profile test run --rm backend-test
 docker compose -f docker/compose.yaml --profile test run --rm frontend-test
+```
+
+Regenerate the committed LangGraph diagram (mounts `docs/` so the host file updates):
+
+```bash
+docker compose -f docker/compose.yaml --profile test run --rm \
+  -v "$PWD/docs:/app/docs" backend-test \
+  uv run python scripts/export_graph.py
 ```
 
 ## Example Hybrid question

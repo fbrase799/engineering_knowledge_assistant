@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.env
+*.egg-info/
+dist/
+build/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Local model / caches
+.cache/
+**/huggingface/
+.fastembed_cache/
+backend/data/faiss/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

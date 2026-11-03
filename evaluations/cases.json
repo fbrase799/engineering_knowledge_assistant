@@ -1,0 +1,57 @@
+[
+  {
+    "id": "compare-timeouts",
+    "retrieval_mode": "hybrid",
+    "question": "How does the sensor timeout handling described in our reference architecture compare with current watchdog recommendations for embedded systems?",
+    "expect": {
+      "comparison_status_in": ["full", "partial_local_only", "partial_web_only"],
+      "max_tavily_calls": 1,
+      "max_llm_calls": 1,
+      "expected_doc_ids_any": ["REF-ARCH-001", "SPEC-HB-010"]
+    }
+  },
+  {
+    "id": "combine-heartbeat",
+    "retrieval_mode": "hybrid",
+    "question": "Our design uses a heartbeat monitor. What additional failure-detection considerations are suggested by recent public technical guidance?",
+    "expect": {
+      "comparison_status_in": ["full", "partial_local_only", "partial_web_only"],
+      "max_tavily_calls": 1,
+      "max_llm_calls": 1,
+      "expected_doc_ids_any": ["ADR-WATCHDOG-003", "SPEC-HB-010"]
+    }
+  },
+  {
+    "id": "local-thresholds",
+    "retrieval_mode": "local",
+    "question": "What timeout thresholds and fallback states are specified in the sample architecture?",
+    "expect": {
+      "comparison_status_in": ["local_only", "evidence_gap"],
+      "max_tavily_calls": 0,
+      "max_llm_calls": 1,
+      "expected_doc_ids_any": ["REF-ARCH-001", "SPEC-HB-010"]
+    }
+  },
+  {
+    "id": "web-watchdog",
+    "retrieval_mode": "web",
+    "question": "What do current official sources say about watchdog strategies on embedded Linux?",
+    "expect": {
+      "comparison_status_in": ["web_only", "evidence_gap"],
+      "max_tavily_calls": 1,
+      "max_llm_calls": 1,
+      "forbid_local_retrieval": true
+    }
+  },
+  {
+    "id": "unsupported-compliance",
+    "retrieval_mode": "hybrid",
+    "question": "How does our architecture comply with ISO 26262 ASIL-D for braking systems?",
+    "expect": {
+      "allow_evidence_gap_or_partial": true,
+      "max_tavily_calls": 1,
+      "max_llm_calls": 1,
+      "must_not_claim_verified_compliance": true
+    }
+  }
+]

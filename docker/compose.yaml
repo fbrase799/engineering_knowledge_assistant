@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+      target: runtime
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      target: runtime
+      args:
+        VITE_API_BASE: ""
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend-test:
+    profiles: ["test"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+      target: dev
+    working_dir: /app
+    environment:
+      # Tests use mocks; keys are optional placeholders.
+      AZURE_OPENAI_API_KEY: test
+      AZURE_OPENAI_ENDPOINT: https://example.openai.azure.com/
+      TAVILY_API_KEY: test
+    command:
+      - sh
+      - -c
+      - >
+        uv run ruff check backend scripts evaluations
+        && uv run pytest -q
+        && uv run python scripts/export_graph.py --check
+        && uv run python evaluations/run_eval.py
+
+  frontend-test:
+    profiles: ["test"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      target: test

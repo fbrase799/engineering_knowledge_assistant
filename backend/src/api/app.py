@@ -24,13 +24,13 @@ from backend.src.api.schemas import (
 from backend.src.config import Settings, get_settings
 from backend.src.graph.workflow import AssistantGraph, build_assistant_graph, get_graph_mermaid
 from backend.src.observability.tracing import configure_langsmith
+from backend.src.retrieval.corpus_catalog import build_corpus_catalog
 from backend.src.retrieval.models import (
     AskResponse,
     ComparisonSections,
     RetrievalMode,
     UsageMetrics,
 )
-from backend.src.retrieval.corpus_catalog import build_corpus_catalog
 from backend.src.retrieval.retriever import get_shared_retriever, reset_shared_retriever
 
 EXAMPLE_QUESTIONS = [

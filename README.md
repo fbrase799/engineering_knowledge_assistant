@@ -7,7 +7,7 @@ Hybrid engineering Q&A that **compares a curated document corpus with current pu
 - **Synthesis:** at most one Azure OpenAI generation call
 - **Orchestration:** LangGraph `StateGraph` with conditional routing
 - **UI:** React + TypeScript (Vite) with SSE execution timeline
-- **Deploy:** Docker Compose locally, Helm on Azure AKS
+- **Deploy:** Docker Compose locally, Azure Container Apps in the cloud
 
 Treat [PRD.md](PRD.md) as the product source of truth.
 
@@ -22,7 +22,7 @@ cp .env.example .env
 # For local demo with OpenAI platform credits:
 #   OPENAI_API_KEY=sk-...
 #   TAVILY_API_KEY=...
-# Azure OpenAI (AZURE_OPENAI_*) is optional and typical for AKS later.
+# Azure OpenAI (AZURE_OPENAI_*) is optional locally; typical for Azure Container Apps.
 
 docker compose -f docker/compose.yaml up --build
 ```
@@ -62,7 +62,8 @@ Expect: documented approach, web findings, comparison, engineering implications 
 | [docs/architecture.md](docs/architecture.md) | System architecture |
 | [docs/langgraph.md](docs/langgraph.md) | Generated LangGraph Mermaid |
 | [docs/rag-data-flow.md](docs/rag-data-flow.md) | Ingestion and disclosure boundaries |
-| [docs/deployment-aks.md](docs/deployment-aks.md) | AKS / Helm / cost controls |
+| [docs/deployment-container-apps.md](docs/deployment-container-apps.md) | Azure Container Apps / cost controls |
+| [azure/README.md](azure/README.md) | ACA deploy scripts (secrets from local `.env`) |
 | [docs/evaluation.md](docs/evaluation.md) | Evaluation cases and findings |
 | [docs/decisions/](docs/decisions/) | Architecture decision records |
 

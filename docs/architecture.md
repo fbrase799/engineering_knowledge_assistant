@@ -12,7 +12,7 @@
 | Generation | Azure OpenAI `gpt-4o-mini` (≤1 call) |
 | Observability | LangSmith (optional) + sanitized UI events |
 | Local deploy | Docker Compose under `docker/` (Docker-first; `uv` runs in-container) |
-| Cloud deploy | Helm chart under `deploy/helm/` → AKS (CPU) |
+| Cloud deploy | Azure Container Apps (frontend + backend) |
 
 ## Request path (Hybrid)
 

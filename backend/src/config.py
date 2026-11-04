@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
 
-    # Azure OpenAI (AKS / Azure deployments)
+    # Azure OpenAI (Azure Container Apps / cloud deployments)
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
     azure_openai_api_version: str = "2024-10-21"

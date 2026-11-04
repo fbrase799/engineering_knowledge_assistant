@@ -6,10 +6,10 @@
 |---|---|
 | Product / repository | `engineering-knowledge-assistant` |
 | Status | Draft — v1.1 |
-| Updated | 2026-11-03 |
+| Updated | 2026-11-04 |
 | Product type | Public GitHub portfolio project and usable engineering assistant |
 | Primary users | Software engineers, software architects, technical reviewers |
-| Primary deployment | Azure Kubernetes Service (AKS) |
+| Primary deployment | Azure Container Apps |
 | Local deployment | Docker Compose |
 | Primary use case | **Compare and synthesize engineering information from a curated document collection and current public web results** |
 
@@ -19,7 +19,7 @@
 
 Its primary interaction is a **hybrid engineering question**, for example: *“How does the timeout strategy in our reference architecture compare with current embedded-system watchdog design recommendations?”* The assistant retrieves evidence from one **shared, predefined RAG knowledge base**, performs a **single targeted Tavily web search**, and uses **one Azure OpenAI generation call** to produce a source-grounded comparison. It explicitly distinguishes documented design choices, external findings, differences, and possible improvements.
 
-The implementation is also an architecture showcase: **LangGraph** coordinates a bounded workflow; **LangChain** integrates retrieval and model calls; **LangSmith** records developer traces; the frontend exposes an understandable execution timeline; and the application supports **Docker** and **AKS** deployments. The project's primary value to end users is *evidence-based comparison and synthesis*, not a generic chatbot or autonomous deep-research system.
+The implementation is also an architecture showcase: **LangGraph** coordinates a bounded workflow; **LangChain** integrates retrieval and model calls; **LangSmith** records developer traces; the frontend exposes an understandable execution timeline; and the application supports **Docker** and **Azure Container Apps** deployments. The project's primary value to end users is *evidence-based comparison and synthesis*, not a generic chatbot or autonomous deep-research system.
 
 ## 2. User Problem and Value Proposition
 
@@ -78,7 +78,7 @@ The initial document corpus should tell a coherent, **synthetic engineering stor
 | G-04 | Demonstrate RAG and selective disclosure | Offline ingestion, chunking, local embeddings, one shared FAISS index, bounded retrieval, and tests of outgoing model payloads |
 | G-05 | Demonstrate controlled web enrichment | Tavily integrated with at most one basic search in Web/Hybrid mode; zero in Local mode |
 | G-06 | Make execution observable | End user sees a sanitized request timeline; developer can inspect correlated LangSmith traces |
-| G-07 | Demonstrate cloud/software engineering | Reproducible Docker development, Helm deployment to AKS, CI, tests, architecture decisions, and evaluation results |
+| G-07 | Demonstrate cloud/software engineering | Reproducible Docker development, Azure Container Apps deployment, CI, tests, architecture decisions, and evaluation results |
 
 **Version 1 success:** A reviewer can run the app, ask the primary comparison question, inspect an answer with differentiated sources, view the graph execution trace, and verify the architecture and behavior in documentation and automated tests.
 
@@ -93,7 +93,7 @@ The initial document corpus should tell a coherent, **synthetic engineering stor
 - Source-grounded **comparison output**, with differences, agreements, caveats, and possible engineering next steps.
 - A bounded LangGraph workflow with conditional edges and explicit fallback paths.
 - LangSmith developer tracing, sanitized frontend execution timeline, and optional manually curated public example traces.
-- Docker Compose, Helm/AKS deployment instructions, GitHub Actions, and automated testing.
+- Docker Compose, Azure Container Apps deployment instructions, GitHub Actions, and automated testing.
 - Generated Mermaid LangGraph documentation and a separate knowledge/data-boundary diagram.
 
 ### 5.2 Out of scope for v1
@@ -129,7 +129,7 @@ The initial document corpus should tell a coherent, **synthetic engineering stor
 | FR-17 | Must | Show a sanitized execution timeline to the user. | Visible node order, branch, statuses, durations, source counts, and call counts, without backend credentials. |
 | FR-18 | Must | Integrate LangSmith for developer tracing. | Configured requests produce correlated traces; tracing may be disabled without preventing normal answers. |
 | FR-19 | Must | Generate the Mermaid LangGraph diagram from actual code. | Documented export command writes `docs/langgraph.md`; CI detects a stale graph diagram. |
-| FR-20 | Must | Run locally and deploy to AKS. | Docker Compose setup works; Helm chart and documented AKS smoke test are provided. |
+| FR-20 | Must | Run locally and deploy to Azure Container Apps. | Docker Compose setup works; documented Container Apps deploy and smoke test are provided. |
 | FR-21 | Should | Display token usage and estimated cost. | Values use provider usage data when available, with clear estimated/unavailable labels. |
 | FR-22 | Should | Expose only curated example LangSmith trace links. | Public trace links, if any, are manually reviewed for safe synthetic/public content. |
 | FR-23 | Should | Provide a small evaluation corpus and report. | Includes comparison correctness, source coverage, missing-evidence handling, retrieval relevance, latency, and budget adherence. |
@@ -265,7 +265,7 @@ No numerical performance or evidence findings should be hard-coded into producti
 | Generation | Azure OpenAI | One answer or comparison synthesis |
 | Observability | LangSmith | Detailed developer tracing |
 | Tooling | `uv`, Docker | Reproducible builds and local setup |
-| Cloud | Azure AKS, Helm | Container deployment |
+| Cloud | Azure Container Apps | Container deployment (frontend + backend) |
 | CI | GitHub Actions | Linting, tests, build, documentation checks |
 
 ### 12.1 Logical data flow
@@ -274,7 +274,7 @@ No numerical performance or evidence findings should be hard-coded into producti
 flowchart TD
     Docs[Curated public/synthetic documents] --> Ingest[Offline chunking + local embeddings]
     Ingest --> Index[(Shared FAISS index)]
-    Question[Engineering question] --> Graph[LangGraph on AKS]
+    Question[Engineering question] --> Graph[LangGraph on Container Apps]
     Graph --> Local[Local retrieval]
     Local --> Index
     Graph --> Web[Tavily search]
@@ -290,13 +290,14 @@ flowchart TD
 
 ### 12.2 Deployment requirements
 
-- Use Docker Compose for local development and Helm for AKS. Put Docker-related artifacts under `docker/` where practical and Helm files under `deploy/helm/`.
-- Initial AKS setup should be **CPU-only**, with one replica per component and modest resource allocations.
+- Use Docker Compose for local development and **Azure Container Apps** for cloud hosting of the two containers (frontend + backend). Put Docker-related artifacts under `docker/` where practical.
+- Keep the demonstrator small: one revision/replica per component, CPU-only, modest resource allocations.
 - Packaged FAISS artifacts are appropriate for the small fixed corpus; scaling beyond a single service replica may duplicate memory/index state and is not a v1 goal.
 - Configure API keys and model endpoints at runtime via secrets/environment configuration, never in the repository or browser.
 - Protect a public demo with request size limits, rate limits, timeouts, and configurable per-request token/search budgets.
-- Provide Azure budget/alert setup, deployment, smoke-test, stop/start, and teardown instructions. **AKS infrastructure costs can dominate LLM/search costs**; never imply that a Free control-plane tier makes the cluster free.
-- A continuously running public demo is optional. A reproducible local demonstration and an AKS deployment that can be activated when needed are acceptable.
+- Provide Azure budget/alert setup, deployment, smoke-test, and teardown instructions. Prefer Container Apps over Kubernetes for this portfolio demonstrator so infrastructure cost stays near the application cost.
+- A continuously running public demo is optional. A reproducible local demonstration and a Container Apps deployment that can be activated when needed are acceptable.
+- **Helm / AKS are out of scope for v1** — unnecessary packaging for a two-container demonstrator.
 
 ## 13. LangSmith and User-Visible Observability
 
@@ -347,7 +348,7 @@ Evaluation dimensions:
 - Resilience: Are incomplete sources and timeouts communicated honestly?
 - Predictability: Latency, token counts, one-call limits, and estimated execution cost.
 
-**Release acceptance:** All `Must` requirements and tests pass; the primary Hybrid question produces a documented, source-separated comparison; the UI shows an actual trace; and the README provides reproducible setup, diagrams, limitations, evaluation findings, and AKS instructions.
+**Release acceptance:** All `Must` requirements and tests pass; the primary Hybrid question produces a documented, source-separated comparison; the UI shows an actual trace; and the README provides reproducible setup, diagrams, limitations, evaluation findings, and Container Apps instructions.
 
 ## 15. Suggested Repository Layout
 
@@ -360,7 +361,7 @@ engineering-knowledge-assistant/
 │   ├── architecture.md
 │   ├── langgraph.md            # generated from compiled graph
 │   ├── rag-data-flow.md
-│   ├── deployment-aks.md
+│   ├── deployment-container-apps.md
 │   ├── evaluation.md
 │   └── decisions/
 ├── sample_documents/           # public/synthetic engineering corpus
@@ -380,8 +381,6 @@ engineering-knowledge-assistant/
 ├── docker/
 │   ├── compose.yaml
 │   └── ...
-├── deploy/
-│   └── helm/
 ├── .github/
 │   └── workflows/
 └── pyproject.toml
@@ -396,7 +395,7 @@ Directory details may evolve during implementation; keep ingestion, orchestratio
 | **M1 — Shared RAG corpus** | Synthetic engineering docs, ingestion, embeddings, FAISS, source metadata, retrieval tests | Local queries retrieve relevant, citable excerpts from one shared index. |
 | **M2 — Bounded LangGraph** | Graph, conditional routing, Azure OpenAI, evidence gating, generated Mermaid, call-budget tests | Local mode works end-to-end; one-call bounds and missing-evidence paths are tested. |
 | **M3 — Hybrid comparison** | Tavily integration, Hybrid default, comparison prompt/output contract, evaluation cases | Primary user question combines both sources and differentiates agreements, differences, and uncertain claims. |
-| **M4 — Traceable cloud demo** | React UI, LangSmith, frontend timeline, Docker Compose, Helm/AKS, CI, README | Reviewers can reproduce the demo, inspect measured execution behavior and deploy with documented cost limits. |
+| **M4 — Traceable cloud demo** | React UI, LangSmith, frontend timeline, Docker Compose, Azure Container Apps, CI, README | Reviewers can reproduce the demo, inspect measured execution behavior and deploy with documented cost limits. |
 
 **M3 is the product-value milestone**; M4 completes the cloud and observability showcase. Avoid adding multi-agent complexity before the hybrid comparison works reliably.
 
@@ -409,7 +408,7 @@ Directory details may evolve during implementation; keep ingestion, orchestratio
 | RAG misses a relevant document section | Maintain a measured evaluation set; tune chunking and retrieval thresholds. |
 | LLM invents sources or overstates conclusions | Supply source IDs, validate references, test grounding, and state evaluation limitations. |
 | Cost rises due to unexpected tool retries or public traffic | One Tavily/LLM call budgets, rate limits, token budgets, timeouts and Azure budgets. |
-| AKS idle cost exceeds application usage cost | CPU-only deployment, stop/teardown instructions, local demo fallback. |
+| Cloud idle cost exceeds application usage cost | Prefer Container Apps over Kubernetes; modest CPU allocations; stop/teardown instructions; local demo fallback. |
 | Tavily or LangSmith receives text not intended for that provider | Never send retrieved chunks to Tavily; document question/trace disclosure and configure tracing deliberately. |
 | Mermaid diagram drifts from implementation | Generate the diagram from the compiled graph and verify in CI. |
 
@@ -430,4 +429,4 @@ Directory details may evolve during implementation; keep ingestion, orchestratio
 4. **Bound every paid operation:** A small explicit LangGraph is preferable to costly autonomous deep research for this use case.
 5. **Control data boundaries:** RAG limits document context; web search and tracing are separate external disclosure paths.
 6. **Show the architecture:** Generated LangGraph diagram, RAG data-flow, trace timeline, evaluation results, and automated tests.
-7. **Keep it reproducible:** Docker-first local development, public/synthetic sample content, and a cost-conscious AKS deployment.
+7. **Keep it reproducible:** Docker-first local development, public/synthetic sample content, and a cost-conscious Azure Container Apps deployment.

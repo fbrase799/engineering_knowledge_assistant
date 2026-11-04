@@ -315,12 +315,20 @@ export default function App() {
                   )}
                   {!result.sections.documented_approach &&
                     !result.sections.web_findings &&
-                    !result.sections.comparison && (
+                    !result.sections.comparison &&
+                    (result.answer_markdown ? (
                       <section>
                         <h2>Answer</h2>
                         <pre className="markdown">{result.answer_markdown}</pre>
                       </section>
-                    )}
+                    ) : (
+                      !result.error && (
+                        <div className="banner warn">
+                          The model returned no visible answer text. Try again, or raise
+                          LLM_MAX_TOKENS for gpt-5-* Azure deployments.
+                        </div>
+                      )
+                    ))}
                 </article>
 
                 <div className="sources">

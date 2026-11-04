@@ -102,16 +102,24 @@ class AzureOpenAIClient:
         self.call_count += 1
         response = client.invoke(prompt)
         content = response.content if hasattr(response, "content") else str(response)
+        if not isinstance(content, str):
+            content = str(content)
+        content = content.strip()
         usage = extract_usage(response, self._settings)
         usage.llm_calls = 1  # this request only; graph aggregates per invocation
-        parsed = parse_llm_json(content if isinstance(content, str) else str(content))
+        if not content:
+            raise RuntimeError(
+                "Model returned empty content. For gpt-5-* deployments, increase "
+                "LLM_MAX_TOKENS so reasoning plus the visible answer fit."
+            )
+        parsed = parse_llm_json(content)
         sections = ComparisonSections(
             documented_approach=parsed.get("documented_approach"),
             web_findings=parsed.get("web_findings"),
             comparison=parsed.get("comparison"),
             engineering_implications=parsed.get("engineering_implications"),
         )
-        answer = parsed.get("answer_markdown") or content
+        answer = (parsed.get("answer_markdown") or content).strip()
         citation_ids = [str(x) for x in parsed.get("citation_ids", [])]
         return sections, answer, citation_ids, usage
 

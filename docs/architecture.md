@@ -9,7 +9,7 @@
 | Orchestration | LangGraph `StateGraph` |
 | RAG | LangChain + FAISS, FastEmbed MiniLM (CPU) |
 | Web | Tavily basic search (≤1 call, ≤3 results) |
-| Generation | Azure OpenAI `gpt-4o-mini` (≤1 call) |
+| Generation | Azure OpenAI `gpt-5-mini` (≤1 call) |
 | Observability | LangSmith (optional) + sanitized UI events |
 | Local deploy | Docker Compose under `docker/` (Docker-first; `uv` runs in-container) |
 | Cloud deploy | Azure Container Apps (frontend + backend) |

@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     azure_openai_api_key: str | None = None
     azure_openai_endpoint: str | None = None
     azure_openai_api_version: str = "2024-10-21"
-    azure_openai_deployment: str = "gpt-4o-mini"
+    azure_openai_deployment: str = "gpt-5-mini"
     llm_max_tokens: int = 1800
     llm_temperature: float = 0.2
     estimated_input_cost_per_1k: float = 0.00015

@@ -72,13 +72,15 @@ class AzureOpenAIClient:
         if provider == "azure":
             from langchain_openai import AzureChatOpenAI
 
+            # gpt-5-* deployments reject custom temperature and max_tokens;
+            # use defaults + max_completion_tokens instead.
             self._client = AzureChatOpenAI(
                 azure_endpoint=self._settings.azure_openai_endpoint,
                 api_key=self._settings.azure_openai_api_key,
                 api_version=self._settings.azure_openai_api_version,
                 azure_deployment=self._settings.azure_openai_deployment,
-                temperature=self._settings.llm_temperature,
-                max_tokens=self._settings.llm_max_tokens,
+                temperature=1,
+                max_completion_tokens=self._settings.llm_max_tokens,
             )
             return self._client
         raise RuntimeError(
